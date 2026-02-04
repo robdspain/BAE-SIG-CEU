@@ -290,7 +290,7 @@ function CheckInApp() {
                             Join Active Event
                             <ArrowRight size={20} />
                         </a>
-                        <Link to="/dashboard" className="bg-white/10 backdrop-blur-sm px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white border-2 border-white/40 hover:bg-white/20 hover:border-white/60 transition flex items-center justify-center gap-3">
+                        <Link to="/dashboard" className="bg-[#002855] border-2 border-[#FFB81C] px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-[#FFB81C] hover:bg-[#FFB81C] hover:text-[#002855] transition flex items-center justify-center gap-3">
                             <FileText size={20} /> My History
                         </Link>
                     </div>
