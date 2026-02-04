@@ -107,3 +107,49 @@ export const remove = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+// Sync all existing attendees to contacts table
+export const syncFromAttendees = mutation({
+  handler: async (ctx) => {
+    const attendees = await ctx.db.query("attendees").collect();
+    let synced = 0;
+    let skipped = 0;
+
+    for (const attendee of attendees) {
+      const email = attendee.email.toLowerCase().trim();
+      
+      const existing = await ctx.db
+        .query("contacts")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .unique();
+
+      if (existing) {
+        // Update with latest info and merge tags
+        const newTags = Array.from(new Set([...existing.tags, `event-${attendee.eventId}`]));
+        await ctx.db.patch(existing._id, {
+          firstName: attendee.firstName,
+          lastName: attendee.lastName,
+          certificationNumber: attendee.bcbaNumber || attendee.rbtNumber || existing.certificationNumber,
+          tags: newTags,
+          lastEventId: String(attendee.eventId),
+        });
+        skipped++;
+      } else {
+        await ctx.db.insert("contacts", {
+          email,
+          firstName: attendee.firstName,
+          lastName: attendee.lastName,
+          certificationNumber: attendee.bcbaNumber || attendee.rbtNumber,
+          source: "event-checkin",
+          tags: [`event-${attendee.eventId}`],
+          lastEventId: String(attendee.eventId),
+          subscribedAt: attendee.checkInTime || new Date().toISOString(),
+          status: "active",
+        });
+        synced++;
+      }
+    }
+
+    return { synced, updated: skipped, total: attendees.length };
+  },
+});
